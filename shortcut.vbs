@@ -3,20 +3,20 @@ Set fso = CreateObject("Scripting.FileSystemObject")
 Set args = WScript.Arguments
 
 If args.Count < 1 Then
-WScript.Echo "Dateiname fehlt."
+WScript.Echo "File name missing!"
 WScript.Quit
 End If
 
-ziel = args(0)
-ziel = fso.GetAbsolutePathName(ziel)
-idxName = InStrRev(ziel, "\")
-idxExt = InStrRev(ziel, ".")
-If idxExt < idxName Then idxExt = Len(ziel) + 1
-ordner = Left(ziel, idxName - 1)
-linkName = Mid(ziel, idxName + 1, idxExt - idxName - 1)
-desktop = wshShell.SpecialFolders("Startup")
+target = args(0)
+target = fso.GetAbsolutePathName(target)
+idxName = InStrRev(target, "\")
+idxExt = InStrRev(target, ".")
+If idxExt < idxName Then idxExt = Len(target) + 1
+directory = Left(target, idxName - 1)
+linkName = Mid(target, idxName + 1, idxExt - idxName - 1)
+startup = wshShell.SpecialFolders("Startup")
 
-Set link = wshShell.CreateShortcut(desktop & "\" & linkName & ".lnk")
-link.TargetPath = ziel
-link.WorkingDirectory = ordner
+Set link = wshShell.CreateShortcut(startup & "\" & linkName & ".lnk")
+link.TargetPath = target
+link.WorkingDirectory = directory
 link.Save
