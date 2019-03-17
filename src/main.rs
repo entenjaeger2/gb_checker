@@ -1,70 +1,52 @@
-extern crate winapi;
 extern crate chrono;
-extern crate rustc_serialize;
+extern crate regex;
+extern crate serde;
+extern crate serde_json;
+extern crate winapi;
 
+use chrono::prelude::*;
+use std::env;
+use std::io::Read;
 use std::ptr::null_mut as NULL;
 use winapi::um::winuser;
-use rustc_serialize::json::Json;
-use std::fs::File;
-use std::io::Read;
-use chrono::prelude::*;
-
-const CURRENT_YEAR: i32 = 2019;
-
-pub struct DateDay {
-	day: u32,
-	month: u32
-}
-
-pub struct Year {
-	year: i32
-}
+mod datainput;
+use datainput::datastructs::{Birthdate, CURRENT_YEAR, DATA_FILE};
+use std::fs::OpenOptions;
 
 fn main() {
-	let mut file = File::open("data/dates.json").unwrap();
+	let args: Vec<_> = env::args().collect();
+
+	let mut file = OpenOptions::new().read(true).open(DATA_FILE).unwrap();
 	let mut data = String::new();
 	file.read_to_string(&mut data).unwrap();
-	let json = Json::from_str(&data).unwrap();
-	
-	let entries = json.as_array().unwrap();
 
-	for entry in entries {
-		let (n, d, y) = deserial_entry(entry);
-		if check_date(&d) {
-			popup(&n, CURRENT_YEAR-y.year);
+	let mut entries: Vec<Birthdate> = serde_json::from_str(&data).unwrap();
+
+	if args.len() > 1 {
+		if args[1] == "--input" {
+			entries.push(datainput::input());
+			datainput::store_data(entries);
+		}
+	} else {
+		for entry in entries {
+			if check_date(entry.date_day, entry.date_month) {
+				popup(&entry.name, CURRENT_YEAR - entry.date_year);
+			}
 		}
 	}
 }
 
-fn deserial_entry(entry: &Json) -> (String, DateDay, Year) {
-	match entry {
-		&Json::Object(_) => {
-			let name = entry.find("name").unwrap().as_string().unwrap().to_string();
-			let (d, y) = date_of_string(entry.find("date").unwrap().as_string().unwrap());
-			(name, d, y)
-		}
-		_ => {
-			 let (d, y) = date_of_string("0.0.0");
-			("".to_string(), d, y)
-		}
-	}
-}
-
-fn date_of_string(dstring: &str) -> (DateDay, Year) {
-	let mut iters = dstring.split(".");
-	let day = u32::from_str_radix(iters.next().unwrap(), 10).unwrap();
-	let month = u32::from_str_radix(iters.next().unwrap(), 10).unwrap();
-	let year = i32::from_str_radix(iters.next().unwrap(), 10).unwrap();
-
-	(DateDay{day, month}, Year{year})
-}
-
-fn check_date(date: &DateDay) -> bool {
-	Utc::today().naive_utc() == NaiveDate::from_ymd(CURRENT_YEAR, date.month, date.day)
+fn check_date(date_d: u32, date_m: u32) -> bool {
+	Utc::today().naive_utc() == NaiveDate::from_ymd(CURRENT_YEAR, date_m, date_d)
 }
 
 fn popup(name: &str, age: i32) {
-	let l_msg: Vec<u16> = (name.to_owned() + " hat heute Geburtstag!\nEs ist der " + &(age.to_string()) + ". Geburtstag\0").encode_utf16().collect();
+	let l_msg: Vec<u16> = (name.to_owned()
+		+ " hat heute Geburtstag!\nEs ist der "
+		+ &(age.to_string())
+		+ ". Geburtstag\0")
+		.encode_utf16()
+		.collect();
 	let l_title: Vec<u16> = "Geburtstag\0".encode_utf16().collect();
 
 	unsafe {
