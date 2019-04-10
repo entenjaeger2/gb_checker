@@ -9,4 +9,3 @@ pub struct Birthdate {
 }
 
 pub const CURRENT_YEAR: i32 = 2019;
-pub static DATA_FILE: &str = "data/dates.json";
