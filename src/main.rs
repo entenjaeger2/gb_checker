@@ -37,7 +37,8 @@ fn main() {
 }
 
 fn check_date(date_d: u32, date_m: u32) -> bool {
-	Utc::today().naive_utc() == NaiveDate::from_ymd(CURRENT_YEAR, date_m, date_d)
+	let today = Utc::today();
+	today.month() == date_m && today.day() == date_d
 }
 
 fn popup(name: &str, age: i32) {
