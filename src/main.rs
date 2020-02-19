@@ -10,7 +10,7 @@ use std::io::Read;
 use std::ptr::null_mut as NULL;
 use winapi::um::winuser;
 mod datainput;
-use datainput::datastructs::{Birthdate, CURRENT_YEAR, DATA_FILE};
+use datainput::datastructs::{Birthdate, DATA_FILE};
 use std::fs::OpenOptions;
 
 fn main() {
@@ -21,23 +21,23 @@ fn main() {
 	file.read_to_string(&mut data).unwrap();
 
 	let mut entries: Vec<Birthdate> = serde_json::from_str(&data).unwrap();
+	let today = Utc::today();
 
 	if args.len() > 1 {
 		if args[1] == "--input" {
-			entries.push(datainput::input());
+			entries.push(datainput::input(today));
 			datainput::store_data(entries);
 		}
 	} else {
 		for entry in entries {
-			if check_date(entry.date_day, entry.date_month) {
-				popup(&entry.name, CURRENT_YEAR - entry.date_year);
+			if check_date(today, entry.date_day, entry.date_month) {
+				popup(&entry.name, today.year() - entry.date_year);
 			}
 		}
 	}
 }
 
-fn check_date(date_d: u32, date_m: u32) -> bool {
-	let today = Utc::today();
+fn check_date(today:Date<Utc>, date_d: u32, date_m: u32) -> bool {
 	today.month() == date_m && today.day() == date_d
 }
 

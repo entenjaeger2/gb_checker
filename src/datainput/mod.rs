@@ -1,12 +1,13 @@
 use std::io;
 use std::io::prelude::*;
 pub mod datastructs;
-use self::datastructs::{Birthdate, CURRENT_YEAR, DATA_FILE};
+use self::datastructs::{Birthdate, DATA_FILE};
 use regex::Regex;
 use serde_json::json;
 use std::fs::OpenOptions;
+use chrono::prelude::*;
 
-pub fn input() -> Birthdate {
+pub fn input(today:Date<Utc>) -> Birthdate {
     let stdin = io::stdin();
     let re = Regex::new(r"^(\d{4})-(\d{2})-(\d{2})$").unwrap();
 
@@ -31,7 +32,7 @@ pub fn input() -> Birthdate {
             date_day = u32::from_str_radix(groups.get(3).map_or("", |m| m.as_str()), 10).unwrap();
 
             if 1900 <= date_year
-                && CURRENT_YEAR >= date_year
+                && today.year() >= date_year
                 && 1 <= date_month
                 && 12 >= date_month
                 && 1 <= date_day
