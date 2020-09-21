@@ -1,13 +1,15 @@
-use std::io;
-use std::io::prelude::*;
-pub mod datastructs;
-use self::datastructs::{Birthdate, DATA_FILE};
+use crate::datastructures::{Birthdate, DATA_FILE};
+use chrono::{
+    prelude::{Date, Utc},
+    Datelike,
+};
 use regex::Regex;
 use serde_json::json;
 use std::fs::OpenOptions;
-use chrono::prelude::*;
+use std::io;
+use std::io::prelude::*;
 
-pub fn input(today:Date<Utc>) -> Birthdate {
+pub fn input(today: Date<Utc>) -> Birthdate {
     let stdin = io::stdin();
     let re = Regex::new(r"^(\d{4})-(\d{2})-(\d{2})$").unwrap();
 

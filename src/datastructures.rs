@@ -8,4 +8,5 @@ pub struct Birthdate {
     pub date_year: i32,
 }
 
+#[cfg(feature = "dynamic-data")]
 pub static DATA_FILE: &str = "data/dates.json";

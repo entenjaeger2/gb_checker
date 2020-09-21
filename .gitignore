@@ -5,3 +5,5 @@
 .project
 *.lock
 *.exe
+/.vscode
+*.zip
