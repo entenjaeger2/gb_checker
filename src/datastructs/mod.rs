@@ -7,5 +7,3 @@ pub struct Birthdate {
     pub date_month: u32,
     pub date_year: i32,
 }
-
-pub const CURRENT_YEAR: i32 = 2020;

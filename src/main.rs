@@ -9,7 +9,7 @@ use std::ptr::null_mut as NULL;
 use winapi::um::winuser;
 
 mod datastructs;
-use datastructs::{Birthdate, CURRENT_YEAR};
+use datastructs::Birthdate;
 
 fn main() {
     let bytes = include_bytes!("../data/dates.json");
@@ -20,13 +20,13 @@ fn main() {
     for entry in entries {
         if check_date(entry.date_day, entry.date_month) {
             webbrowser::open(&gen_florida_man_string(entry.date_day, entry.date_month)).unwrap();
-            popup(&entry.name, CURRENT_YEAR - entry.date_year);
+            popup(&entry.name, Utc::today().year() - entry.date_year);
         }
     }
 }
 
 fn check_date(date_d: u32, date_m: u32) -> bool {
-    Utc::today().naive_utc() == NaiveDate::from_ymd(CURRENT_YEAR, date_m, date_d)
+    Utc::today().naive_utc() == NaiveDate::from_ymd(Utc::today().year(), date_m, date_d)
 }
 
 fn month_string(date_m: u32) -> String {
@@ -62,7 +62,7 @@ fn popup(name: &str, age: i32) {
         + ". Geburtstag\0")
         .encode_utf16()
         .collect();
-    let l_title: Vec<u16> = "Geburtstag\0".encode_utf16().collect();
+    let l_title: Vec<u16> = "Geburtstag!\0".encode_utf16().collect();
 
     unsafe {
         winuser::MessageBoxW(
