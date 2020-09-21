@@ -1,32 +1,83 @@
-extern crate chrono;
-extern crate serde;
-extern crate serde_json;
-extern crate webbrowser;
-extern crate winapi;
-
-use chrono::prelude::*;
+use chrono::{
+    prelude::{Date, Utc},
+    Datelike,
+};
+use std::env;
+#[cfg(feature = "dynamic-data")]
+use std::fs::OpenOptions;
+#[cfg(feature = "dynamic-data")]
+use std::io::Read;
 use std::ptr::null_mut as NULL;
 use winapi::um::winuser;
 
-mod datastructs;
-use datastructs::Birthdate;
+mod datastructures;
+use datastructures::Birthdate;
+#[cfg(feature = "dynamic-data")]
+use datastructures::DATA_FILE;
+#[cfg(feature = "dynamic-data")]
+mod datainput;
 
 fn main() {
-    let bytes = include_bytes!("../data/dates.json");
-    let data = String::from_utf8_lossy(bytes);
+    let args: Vec<_> = env::args().collect();
+    let today = Utc::today();
 
-    let entries: Vec<Birthdate> = serde_json::from_str(&data).unwrap();
+    if args.len() > 1 {
+        if args[1] == "--test" {
+            let test_date = Birthdate {
+                name: "Test".to_string(),
+                date_day: today.day(),
+                date_month: today.month(),
+                date_year: today.year(),
+            };
+            handle_birthday(today, test_date);
+        }
+    }
 
-    for entry in entries {
-        if check_date(entry.date_day, entry.date_month) {
-            webbrowser::open(&gen_florida_man_string(entry.date_day, entry.date_month)).unwrap();
-            popup(&entry.name, Utc::today().year() - entry.date_year);
+    #[cfg(not(feature = "dynamic-data"))]
+    {
+        let bytes = include_bytes!("../data/dates.json");
+        let data = String::from_utf8_lossy(bytes);
+
+        let entries: Vec<Birthdate> = serde_json::from_str(&data).unwrap();
+
+        handle_birthdays(today, entries);
+    }
+    #[cfg(feature = "dynamic-data")]
+    {
+        let args: Vec<_> = env::args().collect();
+
+        let mut file = OpenOptions::new().read(true).open(DATA_FILE).unwrap();
+        let mut data = String::new();
+        file.read_to_string(&mut data).unwrap();
+
+        let mut entries: Vec<Birthdate> = serde_json::from_str(&data).unwrap();
+
+        if args.len() > 1 {
+            if args[1] == "--input" {
+                entries.push(datainput::input(today));
+                datainput::store_data(entries);
+            }
+        } else {
+            handle_birthdays(today, entries);
         }
     }
 }
 
-fn check_date(date_d: u32, date_m: u32) -> bool {
-    Utc::today().naive_utc() == NaiveDate::from_ymd(Utc::today().year(), date_m, date_d)
+fn handle_birthdays(today: Date<Utc>, entries: Vec<Birthdate>) {
+    for entry in entries {
+        if check_date(today, entry.date_day, entry.date_month) {
+            handle_birthday(today, entry);
+        }
+    }
+}
+
+fn handle_birthday(today: Date<Utc>, entry: Birthdate) {
+    webbrowser::open(&gen_florida_man_string(entry.date_day, entry.date_month)).unwrap();
+    popup(&entry.name, today.year() - entry.date_year);
+}
+
+fn check_date(today: Date<Utc>, date_d: u32, date_m: u32) -> bool {
+    today.month() == date_m && today.day() == date_d
 }
 
 fn month_string(date_m: u32) -> String {
